@@ -22,7 +22,10 @@ func CreateNetworkHandler(ctx context.Context, parameters map[string]interface{}
 		return err
 	}
 	_, err = cli.NetworkCreate(ctx, name, network.CreateOptions{})
-	return err
+	if err != nil {
+		fmt.Printf("error creating Network :%v", err)
+	}
+	return nil
 }
 
 // PullImageHandler pulls a Docker image.
@@ -56,7 +59,10 @@ func pullImage(ctx context.Context, imgName string) error {
 	}
 	defer out.Close()
 	_, err = io.Copy(io.Discard, out)
-	return err
+	if err != nil {
+		fmt.Printf("error pulling image: %v", err)
+	}
+	return nil
 }
 
 // Handler is the exported symbol that Yaegi will look for.
