@@ -12,30 +12,30 @@ import (
 )
 
 // CreateNetworkHandler creates a Docker network.
-func CreateNetworkHandler(ctx context.Context, parameters map[string]interface{}) error {
+func CreateNetworkHandler(ctx context.Context, parameters map[string]interface{}) (interface{}, error) {
 	name, _ := parameters["name"].(string)
 	if name == "" {
-		return fmt.Errorf("missing network name")
+		return nil, fmt.Errorf("missing network name")
 	}
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		return err
+		return nil, err
 	}
 	_, err = cli.NetworkCreate(ctx, name, network.CreateOptions{})
 	if err != nil {
-		fmt.Printf("error creating Network :%v", err)
+		return nil, fmt.Errorf("error creating network: %v", err)
 	}
-	return nil
+	return fmt.Sprintf("Network '%s' created successfully", name), nil
 }
 
 // PullImageHandler pulls a Docker image.
-func PullImageHandler(ctx context.Context, parameters map[string]interface{}) error {
+func PullImageHandler(ctx context.Context, parameters map[string]interface{}) (interface{}, error) {
 	imgName, ok := parameters["image"].(string)
 	if !ok || imgName == "" {
 		name, nameOk := parameters["name"].(string)
 		tag, tagOk := parameters["tag"].(string)
 		if !nameOk || name == "" {
-			return fmt.Errorf("missing image name for pull_image")
+			return nil, fmt.Errorf("missing image name for pull_image")
 		}
 		if !tagOk || tag == "" {
 			tag = "latest"
@@ -45,32 +45,31 @@ func PullImageHandler(ctx context.Context, parameters map[string]interface{}) er
 	return pullImage(ctx, imgName)
 }
 
-func pullImage(ctx context.Context, imgName string) error {
+func pullImage(ctx context.Context, imgName string) (interface{}, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		return err
+		return nil, err
 	}
 	pullCtx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
 	out, err := cli.ImagePull(pullCtx, imgName, image.PullOptions{})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer out.Close()
 	_, err = io.Copy(io.Discard, out)
 	if err != nil {
-		fmt.Printf("error pulling image: %v", err)
+		return nil, fmt.Errorf("error pulling image: %v", err)
 	}
-	return nil
+	return fmt.Sprintf("Image '%s' pulled successfully", imgName), nil
 }
 
 // Handler is the exported symbol that Yaegi will look for.
-// It selects the proper operation based on the provided "action" parameter.
-func Handler(ctx context.Context, parameters map[string]interface{}) error {
+func Handler(ctx context.Context, parameters map[string]interface{}) (interface{}, error) {
 	action, ok := parameters["action"].(string)
 	if !ok {
-		return fmt.Errorf("missing action parameter")
+		return nil, fmt.Errorf("missing action parameter")
 	}
 	switch action {
 	case "create_network":
@@ -78,6 +77,6 @@ func Handler(ctx context.Context, parameters map[string]interface{}) error {
 	case "pull_image":
 		return PullImageHandler(ctx, parameters)
 	default:
-		return fmt.Errorf("unknown action: %s", action)
+		return nil, fmt.Errorf("unknown action: %s", action)
 	}
 }
