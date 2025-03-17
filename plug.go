@@ -1,9 +1,11 @@
-package main
+package plug
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"time"
 
 	"github.com/docker/docker/api/types/image"
@@ -80,3 +82,21 @@ func Handler(ctx context.Context, parameters map[string]interface{}) (interface{
 		return nil, fmt.Errorf("unknown action: %s", action)
 	}
 }
+
+// func main() {
+// 	// // For example, test the "create_network" action.
+// 	// parameters := map[string]interface{}{
+// 	// 	"action": "create_network",
+// 	// 	"name":   "test-network",
+// 	// }
+// 	//
+// 	var parameters map[string]interface{}
+// 	result, err := Handler(context.Background(), parameters)
+// 	if err != nil {
+// 		fmt.Fprintf(os.Stderr, "Handler error: %v\n", err)
+// 		os.Exit(1)
+// 	}
+//
+// 	resJSON, _ := json.MarshalIndent(result, "", "  ")
+// 	fmt.Println("Result:", string(resJSON))
+// }
